@@ -1,15 +1,15 @@
-import { countryStaff, data } from ".";
+import { countryStaff, movieData } from ".";
 
 function threeMovies() {
   let movieBtnTwo = document.getElementById("movieBtn2");
   let resultMinutes = document.getElementById("resultMinutes");
   let resultPopulus = document.getElementById("resultPopulus");
 
-  interface duration {
+  interface Duration {
     minutes: string;
   }
 
-  interface countries {
+  interface Countries {
     country: string;
   }
 
@@ -29,7 +29,7 @@ function threeMovies() {
 
     for (let inp = 0; inp < uniqueMovies.length; inp++) {
       //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      let datasM: Promise<duration> = data(uniqueMovies[inp]).then((allmData) => {
+      let datasM: Promise<Duration> = movieData(uniqueMovies[inp]).then((allmData) => {
         return {
           minutes: allmData["Runtime"],
         };
@@ -49,7 +49,7 @@ function threeMovies() {
 
       //----------------------------------------------------------------------------------------
 
-      let datasP: Promise<countries> = data(uniqueMovies[inp]).then((allpData) => {
+      let datasP: Promise<Countries> = movieData(uniqueMovies[inp]).then((allpData) => {
         return {
           country: allpData["Country"],
         };

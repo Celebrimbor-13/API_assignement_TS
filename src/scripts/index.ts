@@ -9,23 +9,27 @@ interface MovieData {
 }
 
 interface CountryData {
-  currencies: object;
-  flags: object;
+  currencies: string;
+  flags: { png: string };
 }
 //+++++++++++++++++++++++
 
 threeMovies();
 
 // fetch movies
-function data(search: string) {
-  return fetch(`http://www.omdbapi.com/?t=${search}&apikey=84ebe415`).then((search) => {
+function movieData(search: string): Promise<MovieData> {
+  const FETCH_MOVIE = `http://www.omdbapi.com/?t=${search}&apikey=84ebe415`;
+
+  return fetch(FETCH_MOVIE).then((search) => {
     return search.json();
   });
 }
 
 // fetch data for country flags and currencies
-function countryStaff(country: string) {
-  return fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`).then((country) => {
+function countryStaff(country: string): Promise<CountryData> {
+  const FETCH_COUNTRY = `https://restcountries.com/v3.1/name/${country}?fullText=true`;
+
+  return fetch(FETCH_COUNTRY).then((country) => {
     return country.json();
   });
 }
@@ -62,7 +66,7 @@ movieButton.addEventListener("click", function () {
   let receivedMovie = (<HTMLInputElement>document.getElementById("movieName")).value;
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  let ourMovie: Promise<MovieData> = data(receivedMovie).then((allmData) => {
+  let ourMovie: Promise<MovieData> = movieData(receivedMovie).then((allmData) => {
     return {
       countries: allmData["Country"].split(","),
       actorNames: allmData["Actors"].split(","),
@@ -134,4 +138,4 @@ movieButton.addEventListener("click", function () {
     });
 });
 
-export { data, countryStaff };
+export { movieData, countryStaff };
