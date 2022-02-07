@@ -1,16 +1,26 @@
 import "../css/index.css";
 import { threeMovies } from "./threeInputs";
 
+let monthArr: string[] = ["jen", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+let movieButton = document.getElementById("movieBtn");
+let resultDiv = document.getElementById("resultOne");
+let yearsAge = resultDiv.appendChild(document.createElement("p"));
+let actorNames = resultDiv.appendChild(document.createElement("p"));
+let currencyNflag = resultDiv.appendChild(document.createElement("div"));
+
 //++++++++++++++++++++++
 interface MovieData {
-  countries: string[];
-  actorNames: string[];
-  released: string[];
+  countries: string;
+  actorNames: string;
+  released: string;
+  minutes: string;
 }
 
 interface CountryData {
   currencies: string;
   flags: { png: string };
+  population: string;
 }
 //+++++++++++++++++++++++
 
@@ -21,39 +31,31 @@ function movieData(search: string): Promise<MovieData> {
   const FETCH_MOVIE = `http://www.omdbapi.com/?t=${search}&apikey=84ebe415`;
 
   return fetch(FETCH_MOVIE).then((search) => {
-    return search.json();
+    return search.json().then((allmData) => {
+      return {
+        countries: allmData["Country"],
+        actorNames: allmData["Actors"],
+        released: allmData["Released"],
+        minutes: allmData["Runtime"],
+      };
+    });
   });
 }
 
-// fetch data for country flags and currencies
+// fetch data for country flags and currencies and population
 function countryStaff(country: string): Promise<CountryData> {
   const FETCH_COUNTRY = `https://restcountries.com/v3.1/name/${country}?fullText=true`;
 
   return fetch(FETCH_COUNTRY).then((country) => {
-    return country.json();
+    return country.json().then((allcData) => {
+      return {
+        currencies: allcData[0].currencies,
+        flags: allcData[0].flags,
+        population: allcData[0].population,
+      };
+    });
   });
 }
-
-let monthArr: string[] = [
-  "jen",
-  "feb",
-  "mar",
-  "apr",
-  "may",
-  "jun",
-  "jul",
-  "aug",
-  "sep",
-  "oct",
-  "nov",
-  "dec",
-];
-
-let movieButton = document.getElementById("movieBtn");
-let resultDiv = document.getElementById("resultOne");
-let yearsAge = resultDiv.appendChild(document.createElement("p"));
-let actorNames = resultDiv.appendChild(document.createElement("p"));
-let currencyNflag = resultDiv.appendChild(document.createElement("div"));
 
 movieButton.addEventListener("click", function () {
   // to clear from old map and currency elements
@@ -66,13 +68,7 @@ movieButton.addEventListener("click", function () {
   let receivedMovie = (<HTMLInputElement>document.getElementById("movieName")).value;
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  let ourMovie: Promise<MovieData> = movieData(receivedMovie).then((allmData) => {
-    return {
-      countries: allmData["Country"].split(","),
-      actorNames: allmData["Actors"].split(","),
-      released: allmData["Released"].split(" "),
-    };
-  });
+  let ourMovie = movieData(receivedMovie);
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // this part of code is responsible for retrieveing release year of movie and actor names
@@ -80,9 +76,9 @@ movieButton.addEventListener("click", function () {
     .then((movie) => {
       let currentYear: number = new Date().getFullYear();
       let currentMonth: number = new Date().getMonth();
-      let released = movie.released;
-      let actors = movie.actorNames;
-      let country = movie.countries;
+      let released = movie.released.split(" ");
+      let actors = movie.actorNames.split(",");
+      let country = movie.countries.split(", ");
       let actorsAsStr = "";
 
       actors.forEach((actor) => {
@@ -93,9 +89,7 @@ movieButton.addEventListener("click", function () {
       yearsAge.innerText =
         currentYear - parseInt(released[2]) > 0
           ? `${receivedMovie} was relesed ${currentYear - parseInt(released[2])} year(s) ago`
-          : `${receivedMovie} was released ${
-              currentMonth - monthArr.indexOf(released[1])
-            } month(s) ago`;
+          : `${receivedMovie} was released ${currentMonth - monthArr.indexOf(released[1])} month(s) ago`;
 
       actorNames.innerText = `Actors who played main roles: ${actorsAsStr.slice(0, -2)}`;
       //
@@ -110,22 +104,14 @@ movieButton.addEventListener("click", function () {
         let flagImg = currencyNflag.appendChild(document.createElement("img"));
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        let ourCountry: Promise<CountryData> = countryStaff(country[c].trim()).then((allcData) => {
-          return {
-            currencies: allcData[0].currencies,
-            flags: allcData[0].flags,
-          };
-        });
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        let ourCountry = countryStaff(country[c].trim());
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         ourCountry
           .then((readyCdata) => {
-            currencyP.innerText = ` Currency  for ${country[c].trim()} is ${Object.keys(
-              readyCdata.currencies
-            )}. `;
+            currencyP.innerText = ` Currency  for ${country[c].trim()} is ${Object.keys(readyCdata.currencies)}. `;
             flagImg.src = readyCdata.flags["png"];
           })
-
           // does not recognize old movies, for example soviet movies
           .catch(() => {
             currencyP.innerText = "Could not find country";
